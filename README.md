@@ -12,11 +12,14 @@ _This project has been bootstrapped with [Pipenv](https://github.com/pypa/pipenv
 
 - [rumps](https://github.com/jaredks/rumps)
 - [py2app](https://github.com/ronaldoussoren/py2app)
+- [netifaces](https://github.com/al45tair/netifaces)
 
 #### Installing dependencies:
 
 In case you have pipenv installed, just run `pipenv install`.<br/>
+<br/>
 If not, you will need to install:
 
 - `pip install rumps`
 - `pip install py2app`
+- `pip install netifaces`
