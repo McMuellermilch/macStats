@@ -9,7 +9,6 @@ verify_ssl = true
 py2app = "*"
 rumps = "*"
 netifaces = "*"
-airport-py = "*"
 
 [requires]
 python_version = "3.8"

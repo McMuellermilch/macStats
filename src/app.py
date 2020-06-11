@@ -23,7 +23,7 @@ IP_ADDR = ni.ifaddresses('en0')[ni.AF_INET][0]['addr']
 class MacStatsApp(rumps.App):
     def __init__(self):
         super(MacStatsApp, self).__init__("macStats")
-        self.icon = "AppLogo.png"
+        self.icon = "../resources/AppLogo.png"
         self.menu = [
             rumps.MenuItem(f"IP:\t\t{IP_ADDR}"),
             rumps.MenuItem(f"MAC:\t{MAC_ADDR}"),

@@ -1,6 +1,6 @@
 # macStats
 
-<img src="AppImage.png" alt="logo" width="100" height="100">
+<img src="resources/AppImage.png" alt="logo" width="100" height="100">
 
 ### A simple macOS menu bar app, that displays all the relevant info about your Mac
 
