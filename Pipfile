@@ -9,6 +9,7 @@ verify_ssl = true
 py2app = "*"
 rumps = "*"
 netifaces = "*"
+psutil = "*"
 
 [requires]
 python_version = "3.8"
