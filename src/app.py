@@ -6,6 +6,9 @@ import platform
 import psutil
 import socket
 
+# Uncomment line below to have debugging print-statements while the app is running
+# rumps.debug_mode(True)
+
 # Global variables
 MAC_AIRPORT_PATH = "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
 APP = rumps.App("macStats")
@@ -16,6 +19,9 @@ MAC_ADDR = rumps.MenuItem("MAC:\t-")
 IP_ADDR = rumps.MenuItem("IP:\t-")
 DISK_TOTAL = rumps.MenuItem("Total:\t-")
 DISK_FREE = rumps.MenuItem("Free:\t-")
+MEMORY_TOTAL = rumps.MenuItem("Total:\t-")
+MEMORY_USED = rumps.MenuItem("Used:\t-")
+CPU_PERCENTAGE = rumps.MenuItem("CPU%:\t-")
 
 
 def is_connected():
@@ -39,7 +45,7 @@ def cut_ssid_string(data):
     return ssid_string
 
 
-def round_disk_space(disk_space):
+def round_space(disk_space):
     # round_disk_space converts a string to a number, rounds it
     # with a precision of two after the decimal point
     disk_space_num = float(disk_space)
@@ -50,7 +56,7 @@ def round_disk_space(disk_space):
 def gather_data(sender):
     # gather_data updates all the fields of the app
     # rumps.timer open a new thread and triggers gather_data every two senconds
-    global MACOS_VERSION, CONNECTED, SSID, MAC_ADDR, IP_ADDR, DISK_TOTAL, DISK_FREE, TIME
+    global MACOS_VERSION, CONNECTED, SSID, MAC_ADDR, IP_ADDR, DISK_TOTAL, DISK_FREE, MEMORY_TOTAL, MEMORY_USED, CPU_PERCENTAGE
     connection = is_connected()
     if connection:
         APP.icon = "../resources/app_icon_green.png"
@@ -60,14 +66,16 @@ def gather_data(sender):
         APP.icon = "../resources/app_icon_red.png"
         SSID.title = f"SSID:\t-"
         IP_ADDR.title = f"IP:\t\t-"
-    DISK_TOTAL.title = f"Total:\t{round_disk_space(psutil.disk_usage('/').total / (1000.0 ** 3))} GB"
-    DISK_FREE.title = f"Free:\t{round_disk_space(psutil.disk_usage('/').free / (1000.0 ** 3))} GB"
+    DISK_TOTAL.title = f"Total:\t{round_space(psutil.disk_usage('/').total / (1000.0 ** 3))} GB"
+    DISK_FREE.title = f"Free:\t{round_space(psutil.disk_usage('/').free / (1000.0 ** 3))} GB"
+    MEMORY_TOTAL.title = f"Total:\t{round_space(psutil.virtual_memory()[0] / (1024.0 ** 3))} GB"
+    MEMORY_USED.title = f"Used:\t{round_space(psutil.virtual_memory()[3] / (1024.0 ** 3))} GB"
     MACOS_VERSION.title = f"macOS:\t{platform.mac_ver()[0]}"
     MAC_ADDR.title = f"MAC:\t{ni.ifaddresses('en0')[ni.AF_LINK][0]['addr']}"
+    CPU_PERCENTAGE.title = f"Load:\t{psutil.cpu_percent()} %"
 
 
 if __name__ == "__main__":
-    #print(psutil.virtual_memory()[0] / (1000.0 ** 3))
     APP.icon = "../resources/app_icon_white.png"
     APP.menu = [
         "System",
@@ -81,6 +89,12 @@ if __name__ == "__main__":
         "Disk",
         DISK_TOTAL,
         DISK_FREE,
-        None
+        None,
+        "Memory",
+        MEMORY_TOTAL,
+        MEMORY_USED,
+        None,
+        "CPU",
+        CPU_PERCENTAGE,
     ]
     APP.run()

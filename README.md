@@ -4,9 +4,6 @@
 
 ### A simple macOS menu bar app, that displays all the relevant info about your Mac
 
-<img src="resources/screenshot_online.jpg" alt="logo" height="200">
-<img src="resources/screenshot_offline.jpg" alt="logo" height="200">
-
 ---
 
 #### Built with:
