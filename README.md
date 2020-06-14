@@ -6,6 +6,14 @@
 
 ---
 
+### Screenshots:
+
+<img src="resources/screenshot_online.png" alt="screenshot_online" height="350">
+<img src="resources/screenshot_offline.png" alt="screenshot_offline" height="350">
+<br/>
+
+---
+
 #### Built with:
 
 - [rumps](https://github.com/jaredks/rumps)
