@@ -1,10 +1,13 @@
 import rumps
+import os
 import netifaces as ni
 import subprocess
 import json
 import platform
 import psutil
 import socket
+import plistlib
+from Cocoa import NSBundle
 
 # Uncomment line below to have debugging print-statements while the app is running
 # rumps.debug_mode(True)
@@ -12,6 +15,8 @@ import socket
 # Global variables
 MAC_AIRPORT_PATH = "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
 APP = rumps.App("macStats")
+MODELNAME = rumps.MenuItem("Model:\t-")
+PROCESSOR = rumps.MenuItem("Processor:\t-")
 MACOS_VERSION = rumps.MenuItem("macOS:\t-")
 WIFI = rumps.MenuItem("Wifi:")
 SSID = rumps.MenuItem("SSID:\t-")
@@ -22,8 +27,9 @@ DISK_FREE = rumps.MenuItem("Free:\t-")
 MEMORY_TOTAL = rumps.MenuItem("Total:\t-")
 MEMORY_USED = rumps.MenuItem("Used:\t-")
 CPU_PERCENTAGE = rumps.MenuItem("CPU%:\t-")
+CPU_PHYSICAL_CORES = rumps.MenuItem("Physical Cores:\t-")
+CPU_LOGICAL_CORES = rumps.MenuItem("Logical Cores:\t-")
 BATTERY_CHARGE = rumps.MenuItem("Charge:\t-")
-BATTERY_HEALTH = rumps.MenuItem("Health:\t-")
 BATTERY_CYCLES = rumps.MenuItem("Cycles:\t-")
 
 
@@ -53,6 +59,14 @@ def round_space(disk_space):
     # with a precision of two after the decimal point
     disk_space_num = float(disk_space)
     return str(round(disk_space_num, 2))
+
+
+def get_processor_name():
+    # get_processor_name returns the processor name as a string in the
+    # form of: 'Intel(R) Core(TM) i7-5557U CPU @ 3.10GHz'
+    os.environ['PATH'] = os.environ['PATH'] + os.pathsep + '/usr/sbin'
+    return subprocess.check_output(
+        ["sysctl", "-n", "machdep.cpu.brand_string"]).strip().decode('utf8')
 
 
 def get_battery_data():
@@ -101,14 +115,59 @@ def construct_battery_obj(json_data):
     return jsn
 
 
+def get_marketing_name():
+    # get_marketing_name gets the marketing name for the model of the Mac
+    # in the form of '13" MacBook Pro with Retina display (Early 2015)'
+    ServerInformation = NSBundle.bundleWithPath_(
+        '/System/Library/PrivateFrameworks/ServerInformation.framework')
+    ServerCompatibility = NSBundle.bundleWithPath_(
+        '/System/Library/PrivateFrameworks/ServerCompatibility.framework')
+
+    ServerInformationComputerModelInfo = ServerInformation.classNamed_(
+        'ServerInformationComputerModelInfo')
+    SVCSystemInfo = ServerCompatibility.classNamed_('SVCSystemInfo')
+
+    info = SVCSystemInfo.currentSystemInfo()
+    extended_info = ServerInformationComputerModelInfo.attributesForModelIdentifier_(
+        info.computerModelIdentifier())
+
+    if extended_info:
+        marketing_name = extended_info['marketingModel']
+        return marketing_name
+    else:
+        return "-"
+
+
+@rumps.clicked("Copy stats to clipboard")
+def copy_to_clipboard(sender):
+    # copy_to_clipboard executes 'pbcopy' and copies 'data' to the clipboard
+    data = f"""Model: {get_marketing_name()}
+Processor: {get_processor_name()}
+macOS: {platform.mac_ver()[0]}
+MAC-address: {ni.ifaddresses('en0')[ni.AF_LINK][0]['addr']}
+RAM: {round_space(psutil.virtual_memory()[0] / (1024.0 ** 3))}GB
+Internet-connection: {is_connected()}
+"""
+    subprocess.run("pbcopy", universal_newlines=True, input=data)
+
+
+def init_fields():
+    # init_fields initially sets the titles for all menu items that are static
+    MODELNAME.title = f"Model:\t{get_marketing_name()}"
+    PROCESSOR.title = f"Processor:\t{get_processor_name()}"
+    MEMORY_TOTAL.title = f"Total:\t{round_space(psutil.virtual_memory()[0] / (1024.0 ** 3))} GB"
+    MACOS_VERSION.title = f"macOS:\t{platform.mac_ver()[0]}"
+    MAC_ADDR.title = f"MAC:\t{ni.ifaddresses('en0')[ni.AF_LINK][0]['addr']}"
+    CPU_PHYSICAL_CORES.title = f"Physical Cores:\t{psutil.cpu_count(logical=False)}"
+
+
 @rumps.timer(2)
 def gather_data(sender):
     # gather_data updates all the fields of the app
     # rumps.timer open a new thread and triggers gather_data every two senconds
     battery_data = construct_battery_obj(get_battery_data())
-
-    global MACOS_VERSION, CONNECTED, SSID, MAC_ADDR, IP_ADDR, DISK_TOTAL, DISK_FREE, MEMORY_TOTAL, MEMORY_USED, CPU_PERCENTAGE
     connection = is_connected()
+
     if connection:
         APP.icon = "../resources/app_icon_green.png"
         SSID.title = f"SSID:\t{cut_ssid_string(subprocess.check_output([MAC_AIRPORT_PATH, '-I']).decode('utf8').splitlines(True))}"
@@ -119,13 +178,10 @@ def gather_data(sender):
         IP_ADDR.title = f"IP:\t\t-"
     DISK_TOTAL.title = f"Total:\t{round_space(psutil.disk_usage('/').total / (1000.0 ** 3))} GB"
     DISK_FREE.title = f"Free:\t{round_space(psutil.disk_usage('/').free / (1000.0 ** 3))} GB"
-    MEMORY_TOTAL.title = f"Total:\t{round_space(psutil.virtual_memory()[0] / (1024.0 ** 3))} GB"
     MEMORY_USED.title = f"Used:\t{round_space(psutil.virtual_memory()[3] / (1024.0 ** 3))} GB"
-    MACOS_VERSION.title = f"macOS:\t{platform.mac_ver()[0]}"
-    MAC_ADDR.title = f"MAC:\t{ni.ifaddresses('en0')[ni.AF_LINK][0]['addr']}"
     CPU_PERCENTAGE.title = f"Load:\t{psutil.cpu_percent()} %"
+    CPU_LOGICAL_CORES.title = f"Logical Cores:\t{psutil.cpu_count()}"
     BATTERY_CHARGE.title = f"Charge:\t{battery_data['StateOfCharge']} %"
-    BATTERY_HEALTH.title = f"Health:\t{round(float(battery_data['CurrentCapacity']) / (float(battery_data['MaxCapacity']) / 100), 2)} %"
     BATTERY_CYCLES.title = f"Cycles:\t{battery_data['CycleCount']}"
 
 
@@ -134,6 +190,8 @@ def main_func():
     APP.icon = "../resources/app_icon_white.png"
     APP.menu = [
         "System",
+        MODELNAME,
+        PROCESSOR,
         MACOS_VERSION,
         MAC_ADDR,
         None,
@@ -151,15 +209,19 @@ def main_func():
         None,
         "CPU",
         CPU_PERCENTAGE,
+        CPU_PHYSICAL_CORES,
+        CPU_LOGICAL_CORES,
         None,
         "Battery",
         BATTERY_CHARGE,
-        BATTERY_HEALTH,
         BATTERY_CYCLES,
-        None
+        None,
+        "Copy stats to clipboard",
+        None,
     ]
     APP.run()
 
 
 if __name__ == "__main__":
+    init_fields()
     main_func()
