@@ -4,8 +4,6 @@
 
 A simple macOS menu bar app, that displays all the relevant info about your Mac - built on top of [rumps](https://github.com/jaredks/rumps)
 
----
-
 ## Getting started
 
 ### Screenshots
@@ -30,6 +28,10 @@ pip install rumps py2app netifaces psutil
 ### Usage
 
 The idea behind macStats is to bundle all the necessary info about your Mac in one place and with that, replacing an abundance of terminal commands, settings pages and other apps. It's mainly for displaying information, so there's not much interactivity to it.
+
+As an easy to see indicator for network connectivity, the logo in the app bar will change colors depending on the network connection status.
+
+<img src="resources/logo_colorchange.gif" alt="screencast_colorchange">
 
 The only button - `Copy stats to clipboard` - will copy a string to your clipboard, that contains the following data:
 
