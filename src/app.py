@@ -18,7 +18,6 @@ APP = rumps.App("macStats")
 MODELNAME = rumps.MenuItem("Model:\t-")
 PROCESSOR = rumps.MenuItem("Processor:\t-")
 MACOS_VERSION = rumps.MenuItem("macOS:\t-")
-WIFI = rumps.MenuItem("Wifi:")
 SSID = rumps.MenuItem("SSID:\t-")
 MAC_ADDR = rumps.MenuItem("MAC:\t-")
 IP_ADDR = rumps.MenuItem("IP:\t-")
@@ -195,7 +194,7 @@ def main_func():
         MACOS_VERSION,
         MAC_ADDR,
         None,
-        WIFI,
+        "Wifi",
         IP_ADDR,
         SSID,
         None,
