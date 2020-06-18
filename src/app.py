@@ -18,6 +18,7 @@ APP = rumps.App("macStats")
 MODELNAME = rumps.MenuItem("Model:\t-")
 PROCESSOR = rumps.MenuItem("Processor:\t-")
 MACOS_VERSION = rumps.MenuItem("macOS:\t-")
+WIFI = rumps.MenuItem(("Wifi\t-"))
 SSID = rumps.MenuItem("SSID:\t-")
 MAC_ADDR = rumps.MenuItem("MAC:\t-")
 IP_ADDR = rumps.MenuItem("IP:\t-")
@@ -137,6 +138,11 @@ def get_marketing_name():
         return "-"
 
 
+def is_interface_up(interface):
+    addr = ni.ifaddresses(interface)
+    return ni.AF_INET6 in addr
+
+
 @rumps.clicked("Copy stats to clipboard")
 def copy_to_clipboard(sender):
     # copy_to_clipboard executes 'pbcopy' and copies 'data' to the clipboard
@@ -168,10 +174,12 @@ def gather_data(sender):
     connection = is_connected()
 
     if connection:
+        WIFI.title = "Wifi\t\t✔️"
         APP.icon = "../resources/app_icon_green.png"
         SSID.title = f"SSID:\t{cut_ssid_string(subprocess.check_output([MAC_AIRPORT_PATH, '-I']).decode('utf8').splitlines(True))}"
         IP_ADDR.title = f"IP:\t\t{ni.ifaddresses('en0')[ni.AF_INET][0]['addr']}"
     else:
+        WIFI.title = "Wifi\t\t❌"
         APP.icon = "../resources/app_icon_red.png"
         SSID.title = f"SSID:\t-"
         IP_ADDR.title = f"IP:\t\t-"
@@ -194,7 +202,7 @@ def main_func():
         MACOS_VERSION,
         MAC_ADDR,
         None,
-        "Wifi",
+        WIFI,
         IP_ADDR,
         SSID,
         None,
